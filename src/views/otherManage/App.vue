@@ -177,21 +177,22 @@
         if (res.data.code==200) {
           that.selectedIntroRule = res.data.introCoinList[0].basis || 1;
         } else {
-          alert('初始化数据失败！');
+          that.$api.alert('error', '初始化数据失败！');
         };
       })
       .catch(function (error) {
-        alert('初始化数据失败，请检查网络！')
+        that.$api.alert('error', '初始化数据失败，请检查网络！')
       });
     },
     methods: {
       saveRule: function () {
+        var that = this;
         this.$ajax(this.$ip + '/set?choose=' + this.selectedIntroRule)
         .then(function (res) {
-          res.data.code==200? alert('设置成功！'):alert('设置失败，请重试！');
+          res.data.code==200? that.$api.alert('success', '设置成功！'):that.$api.alert('error', '设置失败，请重试！');
         })
         .catch(function (error) {
-          alert('设置失败！' + error);
+          that.$api.alert('error', '设置失败！' + error);
         });
       },
       selectCoins: function (index) {

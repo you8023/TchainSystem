@@ -25,6 +25,40 @@ const ajax = axios.create({
     return result;
     // console.log(arr.getYear()+ arr.getMonth() + arr.getDay());
   }
+
+  static alert(type, msg) {
+    var theDiv = document.createElement('div');
+    var theP = document.createElement('p');
+    var theMsg = msg || '';
+    var textNode = document.createTextNode(theMsg);
+    theP.appendChild(textNode);
+    theDiv.appendChild(theP);
+    theDiv.style.cssText = 'height: 22px; position: absolute; margin: 0 auto; top: 30px; left: 0; right: 0; bottom: 0; box-shadow: 3px 3px 3px #ccc; border-radius: 5px; z-index: 9999; width: fit-content; width: -webkit-fit-content; width: -moz-fit-content; padding: 7px; opacity: .8; transition: opacity 1s;';
+    theP.style.cssText = 'display: inline; color: #fff; font-size: 14px;';
+    switch(type) {
+      case 'error':
+        theDiv.style.cssText += 'background: #E44C3F;'
+        break;
+      case 'warning':
+        theDiv.style.cssText += 'background: #F49A10;'
+        break;
+      case 'success':
+        theDiv.style.cssText += 'background: #26AA60;'
+        break;
+      default:
+        theDiv.style.cssText += 'background: #3199DA;'
+        break;
+    }
+    var theBody = document.getElementsByTagName('body')[0];
+    theBody.appendChild(theDiv);
+    setTimeout(function () {
+      theDiv.style.opacity = 0;
+      setTimeout(function () {
+        theBody.removeChild(theDiv);
+      }, 800);
+    }, 1000);
+    
+  }
  }
 
 export default {

@@ -2,15 +2,15 @@
   <div class="dataTable">
     <div id="headAndSearch">
       <h1>{{theHeader}}</h1>
-      <select v-model="coinChoose" @change="changeCoin">
+      <select v-model="coinChoose" @change="changeCoin" v-if="isShowCoinSelect">
         <option v-for="(item, index) in coinList" :value="item.value">{{item.abName}}</option>
       </select>
       <div id="search">
-          <button type="button" @click="searchById"><img src="../../../assets/search.png" alt="搜索"></button>
+          <button type="button" @click="search"><img src="../../../assets/search.png" alt="搜索"></button>
           <input type="text" name="ID" value="" :placeholder="searchPlh" ref="searchKey">
           <div id="searchSort" v-if="isShowSearchSort">
-            <button type="button" @click="searchIsId = !searchIsId; searchPlh = '输入用户名搜索'" :class="searchIsId? '':'chosenSort'">用户名</button>
-            <button type="button" @click="searchIsId = !searchIsId; searchPlh = '输入订单号搜索'" :class="searchIsId? 'chosenSort':''">订单号</button>
+            <button type="button" @click="searchByUsername" :class="searchIsId? '':'chosenSort'">用户名</button>
+            <button type="button" @click="searchById" :class="searchIsId? 'chosenSort':''">订单号</button>
           </div>
       </div>
     </div>
@@ -38,7 +38,7 @@
         </tr>
       </tbody>
     </table>
-    <div class="splitPage">
+    <div class="splitPage" v-if="isShowSplitPage">
       <nav aria-label="Page navigation">
         <button type="button" v-if="isShowAddBtn">添加</button>
         <ul class="pagination">
@@ -78,11 +78,14 @@
         page: 0,
         limit: 10,
         totalPage: 1,
+        choose: 1,
         searchChoose: 1,
         searchUserChos: 3,
         searchPlh: '输入订单号搜索',
         searchIsId: true,
         isShowSearchSort: true,
+        isShowCoinSelect: true,
+        isShowSplitPage: true,
         searchApi: '',
         getDataApi: '',
         coinChoose: '',
@@ -125,38 +128,45 @@
         this.theData = [];
         switch(this.theHeader) {
           case '交易管理':
-            this.getDataApi = that.$ip + '/deal2' + this.coinChoose + '?choose=2&page=' + (this.page * this.limit) + '&limit=' + this.limit;
+            this.choose = 2;
+            this.getDataApi = that.$ip + '/deal2' + this.coinChoose + '?choose=' + this.choose + '&page=' + (this.page * this.limit) + '&limit=' + this.limit;
             this.isShowBtn = false;
             this.searchChoose = 1;
             this.searchPlh = '输入订单号搜索';
             this.isShowSearchSort = true;
+            this.isShowCoinSelect = true;
             this.searchUserChos = 3;
             break;
           case '买入管理':
-            this.getDataApi = that.$ip + '/hang_sell/0' + this.coinChoose + '?choose=1&page=' + (this.page * this.limit) + '&limit=' + this.limit;
+          this.choose = 1;
+            this.getDataApi = that.$ip + '/hang_sell/0' + this.coinChoose + '?choose=' + this.choose + '&page=' + (this.page * this.limit) + '&limit=' + this.limit;
             this.isShowBtn = false;
             this.searchChoose = 0;
             this.searchPlh = '输入订单号搜索';
             this.isShowSearchSort = false;
+            this.isShowCoinSelect = true;
             this.searchUserChos = 1;
             break;
           case '卖出管理':
-            this.getDataApi = that.$ip + '/hang_sell/0' + this.coinChoose + '?choose=0&page=' + (this.page * this.limit) + '&limit=' + this.limit;
+          this.choose = 0;
+            this.getDataApi = that.$ip + '/hang_sell/0' + this.coinChoose + '?choose=' + this.choose + '&page=' + (this.page * this.limit) + '&limit=' + this.limit;
             this.isShowBtn = false;
             this.searchChoose = 0;
             this.searchPlh = '输入订单号搜索';
             this.isShowSearchSort = false;
+            this.isShowCoinSelect = true;
             this.searchUserChos = 0;
             break;
           case '用户管理':
-            this.limit = 8;
-            this.getDataApi = that.$ip + '/deal1?choose=2&page=' + (this.page * this.limit) + '&limit=' + this.limit;
-            this.isShowBtn = false;
+            this.choose = 2;
+            this.getDataApi = that.$ip + '/deal1?choose=' + this.choose + '&page=' + (this.page * this.limit) + '&limit=' + this.limit;
+            this.isShowBtn = true;
             this.isShowEdit = false;
             this.isShowBlock = false;
             this.isShowAddBtn = true;
             this.searchPlh = '输入用户名搜索';
             this.isShowSearchSort = false;
+            this.isShowCoinSelect = false;
             break;
           default:
             this.isShowBtn = false;
@@ -188,17 +198,25 @@
         console.log(this.coinChoose);
         this.init();
       },
+      searchByUsername: function () {
+        this.searchIsId = !this.searchIsId; 
+        this.searchPlh = '输入用户名搜索';
+      },
       searchById: function () {
+        this.searchIsId = !this.searchIsId; 
+        this.searchPlh = '输入订单号搜索';
+      },
+      search: function () {
         // 搜索
         if (this.$refs.searchKey.value=='') {
-          alert('请输入搜索内容！');
+          this.$api.alert('warning', '请输入搜索内容！');
         } else {
           var that = this;
           // 按订单或用户名搜索
-          that.searchApi = that.searchIsId? this.$ip + '/search' + this.coinChoose + '?ID=' + this.$refs.searchKey.value + '&choose=' + this.searchChoose:this.$ip + '/deal2' + this.coinChoose + '?choose=' + this.searchUserChos + '&name=' + this.$refs.searchKey.value + '&page=' + (this.page * this.limit) + '&limit=' + this.limit;
+          that.searchApi = that.searchIsId? this.$ip + '/search' + this.coinChoose + '?ID=' + this.$refs.searchKey.value + '&choose=' + this.searchChoose:this.$ip + '/deal2' + this.coinChoose + '?choose=' + this.searchUserChos + '&name=' + this.$refs.searchKey.value + '&page=0&limit=10';
           if (this.theHeader=='用户管理') {
             // 搜索用户信息
-            that.searchApi = this.$ip + '/deal1?choose=1&name=' + this.$refs.searchKey.value + '&page=' + (this.page * this.limit) + '&limit=' + this.limit;
+            that.searchApi = this.$ip + '/deal1?choose=1&name=' + this.$refs.searchKey.value + '&page=0&limit=10';
           };
           this.getData(this.searchApi);
         };
@@ -206,24 +224,24 @@
       },
       deleteData: function (index) {
         // 删除用户
-        if(this.theHeader == '用户管理' && confirm('确认删除用户' + this.theData[index].username + '吗？')) {
-          this.$ajax(this.$ip + '/deal1?choose=0&name=' + this.theData[index].username + '&page=' + (this.page * this.limit) + '&limit=' + this.limit)
+        var that = this;
+        if(this.theHeader == '用户管理' && confirm('确认冻结用户' + this.theData[index].username + '的账号吗？')) {
+          this.$ajax(this.$ip + '/deal1?choose=3&name=' + this.theData[index].username + '&page=' + (this.page * this.limit) + '&limit=' + this.limit)
           .then(function (res) {
-            res.data.code == 200? alert('删除成功！'):alert('删除失败！');
+            res.data.code == 200? that.$api.alert('success', '冻结成功！'):that.$api.alert('error', '冻结失败！');
+            that.getData(that.getDataApi);
           })
           .catch(function (error) {
-            alert('删除失败！' + error);
+            that.$api.alert('error', '冻结失败！' + error);
           });
         }
       },
       getTradeData: function (getDataUrl) {
         // 获取交易记录
         this.theContent = ['买家', '卖家', '数量', '单价', '总额', '类别', '完成时间'];
-        this.theData = [];
         var that = this;
         this.$ajax(getDataUrl)
         .then(function (res) {
-          that.totalPage = res.data.totalpage || 1;
           if (res.data.code==200) {
             var theJson = {};
             console.log(res);
@@ -240,6 +258,8 @@
               return theJson;
             }
             if (res.data.data) {
+              that.theData = [];
+              that.totalPage = res.data.totalpage || 1;
               if (Array.isArray(res.data.data.info)) {
                 for(var key of res.data.data.info) {
                   that.theData.push(createData(key));
@@ -249,91 +269,104 @@
               };
               that.checkPage();
             } else {
-              alert(res.data.msg);
+              that.$api.alert('error', res.data.msg);
             };
-            
           } else {
-            alert('信息获取失败！');
+            that.$api.alert('error', '获取信息失败！');
           };
           
         })
         .catch(function (error) {
-          alert('信息获取失败' + error);
+          that.$api.alert('error', '信息获取失败，请检查你的网络！');
         })
       },
       getBuyData: function (getDataUrl) {
         // 获取挂售买入信息
         this.theContent = ['交易ID', '发布者', '数量', '单价', '限额', '总额', '发布时间'];
-        this.theData = [];
         console.log('getBuy');
         var that = this;
         this.$ajax(getDataUrl)
         .then(function (res) {
-          that.totalPage = res.data.totalpage || 1;
-          console.log(res);
-          var theJson = {};
-          for(var key of res.data.data.info){
-            theJson = {
-              id: key.id || that.$refs.searchKey.value,
-              publisher: key.username,
-              amount: key.amount,
-              price: key.the_unit_price,
-              limitPrice: key.the_lower_transaction,
-              totalPrice: ((key.amount * 10) * (key.the_unit_price * 10) / 100).toFixed(2),
-              publishTime: that.$api.formatTime(key.time?key.time:key.time_hang)
-            }
-            that.theData.push(theJson);
-          }
-          that.checkPage();
+          if (res.data.code == 200) {
+            if (res.data.data.info != undefined && res.data.data.info != '' && res.data.data.info != []) {
+              that.theData = [];
+              that.totalPage = res.data.totalpage || 1;
+              console.log(res);
+              var theJson = {};
+              for(var key of res.data.data.info){
+                theJson = {
+                  id: key.id || that.$refs.searchKey.value,
+                  publisher: key.username,
+                  amount: key.amount,
+                  price: key.the_unit_price,
+                  limitPrice: key.the_lower_transaction,
+                  totalPrice: ((key.amount * 10) * (key.the_unit_price * 10) / 100).toFixed(2),
+                  publishTime: that.$api.formatTime(key.time?key.time:key.time_hang)
+                }
+                that.theData.push(theJson);
+              }
+              that.checkPage();
+            } else {
+              that.$api.alert('error', '找不到该条交易！');
+            };
+          } else {
+            that.$api.alert('error', '信息获取失败！');
+          };
         })
         .catch(function (error) {
-          alert('信息获取失败' + error);
+          that.$api.alert('error', '信息获取失败，请检查你的网络！');
         });
       },
       getSellData: function (getDataUrl) {
         // 获取挂售卖出信息
         this.theContent = ['交易ID', '发布者', '数量', '单价', '限额', '总额', '发布时间'];
-        this.theData = [];
         var that = this;
         this.$ajax(getDataUrl)
         .then(function (res) {
-          that.totalPage = res.data.totalpage || 1;
-          console.log(res);
-          var theJson = {};
-          for(var key of res.data.data.info){
-            theJson = {
-              id: key.id || that.$refs.searchKey.value,
-              publisher: key.username,
-              amount: key.amount,
-              price: key.the_unit_price,
-              limitPrice: key.the_lower_transaction,
-              totalPrice: ((key.amount * 10) * (key.the_unit_price * 10) / 100).toFixed(2),
-              publishTime: that.$api.formatTime(key.time?key.time:key.time_hang)
-            }
-            that.theData.push(theJson);
-          }
-          that.checkPage();
+          if (res.data.code == 200) {
+            if (res.data.data.info != undefined && res.data.data.info != '' && res.data.data.info != []) {
+              that.theData = [];
+              that.totalPage = res.data.totalpage || 1;
+              console.log(res);
+              var theJson = {};
+              for(var key of res.data.data.info){
+                theJson = {
+                  id: key.id || that.$refs.searchKey.value,
+                  publisher: key.username,
+                  amount: key.amount,
+                  price: key.the_unit_price,
+                  limitPrice: key.the_lower_transaction,
+                  totalPrice: ((key.amount * 10) * (key.the_unit_price * 10) / 100).toFixed(2),
+                  publishTime: that.$api.formatTime(key.time?key.time:key.time_hang)
+                }
+                that.theData.push(theJson);
+              }
+              that.checkPage();
+            } else {
+              that.$api.alert('error', '找不到该条交易！');
+            };
+          } else {
+            that.$api.alert('error', '信息获取失败！');
+          };
         })
         .catch(function (error) {
-          alert('信息获取失败' + error);
+          that.$api.alert('error', '信息获取失败，请检查你的网络！');
         });
       },
       getUserData: function (getDataUrl) {
         // 获取用户信息
-        this.theContent = ['用户ID', '用户名', '真实姓名', '手机号', '公钥', '余额', 'TRC', 'BCC', 'BTC', 'EOS', 'ETH', '会员等级', '注册时间'];
-        this.theData = [];
+        this.theContent = ['用户名', '真实姓名', '手机号', '身份证号', '公钥', '余额', 'TRC', 'BCC', 'BTC', 'EOS', 'ETH', '会员等级', '注册时间'];
         var that = this;
         this.$ajax(getDataUrl)
         .then(function (res) {
-          that.totalPage = res.data.totalpage || 1;
           console.log(res);
           function createData (key) {
             var theJson = {};
             theJson = {
-                id: key.ID_card,
                 username: key.username,
                 realName: key.real_name,
                 phone: key.phone,
+                id: key.ID_card,
                 publicKey: key.public_key,
                 remaining: key.remaining,
                 Tang: key.Tang,
@@ -348,6 +381,8 @@
           }
           if (res.data.code==200) {
             if (res.data.data) {
+              that.theData = [];
+              that.totalPage = res.data.totalpage || 1;
               if (Array.isArray(res.data.data)) {
                 for(var key of res.data.data){
                   that.theData.push(createData(key));
@@ -356,47 +391,52 @@
                 that.theData.push(createData(res.data.data));
               };
             } else {
-              alert(res.data.msg);
+              that.$api.alert('error', res.data.msg);
             };
             
           } else {
-            alert('获取用户信息失败！');
+            that.$api.alert('error', '获取用户信息失败！');
           };
           that.checkPage();
         })
         .catch(function (error) {
-          alert('获取用户信息失败！' + error);
+          that.$api.alert('error', '获取用户信息失败，请检查你的网络！');
         });
       },
       checkPage: function () {
+        // 初始化分页
         // 改变不可点击的按钮样式
-        var allPageBtn = document.getElementsByClassName('pagination')[0].getElementsByTagName('li');
-        for (var i = 0; i < allPageBtn.length; i++) {
-          allPageBtn[i].className = '';
-        };
-        // 初始化
-        // 前一页
-        if (this.page==0) {
-          allPageBtn[0].className = 'disabled';
-        };
-        // 前五页
-        if (allPageBtn[2].innerText == 1) {
-          allPageBtn[1].className = 'disabled';
-        };
-        // 下一页
-        if (this.page >= this.totalPage-1) {
-          allPageBtn[8].className = 'disabled';
-        };
-        // 后五页
-        if (allPageBtn[6].innerText >= this.totalPage) {
-          allPageBtn[7].className = 'disabled';
-        };
-        // 按钮页
-        for (var i = 2; i < 7; i++) {
-          if (allPageBtn[i].innerText > this.totalPage) {
-            allPageBtn[i].className = 'disabled';
+        if (this.totalPage == 1) {
+          this.isShowSplitPage = false;
+        } else {
+          var allPageBtn = document.getElementsByClassName('pagination')[0].getElementsByTagName('li');
+          for (var i = 0; i < allPageBtn.length; i++) {
+            allPageBtn[i].className = '';
+          };
+          // 前一页
+          if (this.page==0) {
+            allPageBtn[0].className = 'disabled';
+          };
+          // 前五页
+          if (allPageBtn[2].innerText == 1) {
+            allPageBtn[1].className = 'disabled';
+          };
+          // 下一页
+          if (this.page >= this.totalPage-1) {
+            allPageBtn[8].className = 'disabled';
+          };
+          // 后五页
+          if (allPageBtn[6].innerText >= this.totalPage) {
+            allPageBtn[7].className = 'disabled';
+          };
+          // 按钮页
+          for (var i = 2; i < 7; i++) {
+            if (allPageBtn[i].innerText > this.totalPage) {
+              allPageBtn[i].className = 'disabled';
+            };
           };
         };
+        
       },
       turnByPage: function (event) {
         // 分页
